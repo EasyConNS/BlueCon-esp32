@@ -1,6 +1,17 @@
-#include "bt.h"
+#include "bthid.h"
 
+void send_report(uint16_t len, uint8_t *data);
+void connection_cb(esp_bd_addr_t bd_addr, esp_hidd_connection_state_t state);
+void interrupt_data_cb(uint8_t report_id, uint16_t len, uint8_t *p_data);
+
+static bool paired = false;
+static bthid_callbacks_t bthid_cb;
 static JoyCon joycon((Sender_t)send_report);
+
+void send_report(uint16_t len, uint8_t *data)
+{
+    esp_hid_device_send_report(ESP_HIDD_REPORT_TYPE_INTRDATA, data[0], len - 1, data + 1);
+}
 
 // callback for hidd connection changes
 void connection_cb(esp_bd_addr_t bd_addr, esp_hidd_connection_state_t state)
@@ -8,10 +19,16 @@ void connection_cb(esp_bd_addr_t bd_addr, esp_hidd_connection_state_t state)
     switch (state)
     {
     case ESP_HIDD_CONN_STATE_CONNECTED:
-        (bthid_cb->connected_cb)();
+        if (bthid_cb.connected_cb)
+        {
+            (bthid_cb.connected_cb)();
+        }
         break;
     case ESP_HIDD_CONN_STATE_DISCONNECTED:
-        (bthid_cb->disconnected_cb)();
+        if (bthid_cb.disconnected_cb)
+        {
+            (bthid_cb.disconnected_cb)();
+        }
         paired = false;
         break;
     default:
@@ -19,7 +36,7 @@ void connection_cb(esp_bd_addr_t bd_addr, esp_hidd_connection_state_t state)
     }
 }
 
-void raw_intr_data_cb(uint8_t report_id, uint16_t len, uint8_t *p_data)
+void interrupt_data_cb(uint8_t report_id, uint16_t len, uint8_t *p_data)
 {
     p_data -= 1;
     len += 1;
@@ -31,7 +48,10 @@ void raw_intr_data_cb(uint8_t report_id, uint16_t len, uint8_t *p_data)
     if (rlen == 48)
     {
         paired = true;
-        (bthid_cb->paired_cb)(p_data[11]);
+        if (bthid_cb.paired_cb)
+        {
+            (bthid_cb.paired_cb)(p_data[11]);
+        }
     }
 
     p_data[0] = tmp;
@@ -52,7 +72,7 @@ void set_bt_mode(int mode)
     }
 }
 
-void hidd_register_app(int desc_list_len, uint8_t *desc_list)
+void hidd_device_init(int desc_list_len, uint8_t *desc_list)
 {
     static esp_hidd_app_param_t app_param;
     static esp_hidd_qos_param_t both_qos;
@@ -64,17 +84,25 @@ void hidd_register_app(int desc_list_len, uint8_t *desc_list)
     app_param.desc_list_len = desc_list_len;
     memset(&both_qos, 0, sizeof(esp_hidd_qos_param_t));
     esp_hid_device_register_app(&app_param, &both_qos, &both_qos);
-}
-
-void hidd_device_init(bthid_callbacks_t *params, const char *device_name)
-{
-    static esp_hidd_callbacks_t callbacks;
-    bthid_cb = params;
-    callbacks.connection_state_cb = connection_cb;
-    callbacks.intr_data_cb = raw_intr_data_cb;
-    esp_hid_device_init(&callbacks);
-    esp_bt_dev_set_device_name(device_name);
+    esp_bt_dev_set_device_name("Pro Controller");
 
     const uint8_t *bdaddr_raw = esp_bt_dev_get_address();
     joycon.set_btaddr(bdaddr_raw);
+}
+
+void hidd_register_app(bthid_callbacks_t *params)
+{
+    bthid_cb.connected_cb = params->connected_cb;
+    bthid_cb.disconnected_cb = params->disconnected_cb;
+    bthid_cb.paired_cb = params->paired_cb;
+    bthid_cb.intr_data_cb = params->intr_data_cb;
+    //  Must be done after esp_hid_device_register_app
+    static esp_hidd_callbacks_t callbacks;
+    callbacks.connection_state_cb = connection_cb;
+    callbacks.intr_data_cb = interrupt_data_cb;
+    esp_hid_device_init(&callbacks);
+}
+
+void hidd_send_buttons(button_t btn, stick_t lstick, stick_t rstick){
+    joycon.send_buttons(btn, lstick, rstick);
 }

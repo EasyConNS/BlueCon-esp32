@@ -119,6 +119,7 @@ void uart_task()
     // Read data from the UART
     int len = uart_read_bytes(UART_NUM_0, data, BUF_SIZE, 20 / portTICK_RATE_MS);
 
+    xSemaphoreTake(xSemaphore, portMAX_DELAY);
     if (len == 1 && (data[0] == 0xa5))
     {
       // ping & pong
@@ -127,18 +128,15 @@ void uart_task()
     else if (len == 2)
     {
       // l r stick click
-      xSemaphoreTake(xSemaphore, portMAX_DELAY);
       report_count = fill_opcmd(data);
-      xSemaphoreGive(xSemaphore);
     }
     else if (len == 4)
     {
       //uint16_t *cmdop = (uint16_t *)data;
       // buttons
-      xSemaphoreTake(xSemaphore, portMAX_DELAY);
       report_count = fill_opcmd(data);
-      xSemaphoreGive(xSemaphore);
     }
+    xSemaphoreGive(xSemaphore);
 
     if (report_count > 0)
     {
@@ -152,31 +150,25 @@ void uart_task()
 
     // Write data back to the UART
     //uart_write_bytes(UART_NUM_0, (const char *) data, len);
-    //vTaskDelay(50 / portTICK_RATE_MS);
-    vTaskDelay(26);
+    vTaskDelay(200 / portTICK_RATE_MS);
   }
 }
-// http://blog.hypersect.com/interpreting-analog-sticks/
-// https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering
-void send_buttons(uint8_t timer)
-{
-  xSemaphoreTake(xSemaphore, portMAX_DELAY);
-  report30[1] = timer;
-  //buttons
-  report30[3] = button_data[0];
-  report30[4] = button_data[1];
-  report30[5] = button_data[2];
-  //encode left stick
-  report30[6] = lstick_data[0];
-  report30[7] = lstick_data[1];
-  report30[8] = lstick_data[2];
-  //encode right stick
-  report30[9] = rstick_data[0];
-  report30[10] = rstick_data[1];
-  report30[11] = rstick_data[2];
-  xSemaphoreGive(xSemaphore);
 
-  send_report(sizeof(report30), report30);
+void send_buttons()
+{
+  button_t btn = {
+      .left = button_data[0],
+      .shared = button_data[1],
+      .right = button_data[2]};
+  stick_t lstick = {
+      0x800, 0x800};
+  stick_t rstick = {
+      0x800, 0x800};
+
+  xSemaphoreTake(xSemaphore, portMAX_DELAY);
+
+  hidd_send_buttons(btn, lstick, rstick);
+  xSemaphoreGive(xSemaphore);
 
   if (!paired)
   {
@@ -193,15 +185,10 @@ void send_task(void *pvParameters)
 {
   const char *TAG = "send_task";
   ESP_LOGI(TAG, "Sending hid reports on core %d\n", xPortGetCoreID());
-  uint8_t timer = 0;
+
   while (true)
   {
-    send_buttons(timer);
-    timer += 1;
-    if (timer == 255)
-    {
-      timer = 0;
-    }
+    send_buttons();
   }
 }
 void delete_send_task()
@@ -256,8 +243,15 @@ void paired_cb(uint8_t light)
   ESP_LOGI("paired", "got light:%d\n", light);
 }
 
-bool init_()
+extern "C"
 {
+  void app_main(void);
+}
+void app_main()
+{
+  static bthid_callbacks_t param;
+  init_uart();
+
   const char *TAG = "app_init";
   esp_err_t ret;
   ret = nvs_flash_init();
@@ -274,53 +268,36 @@ bool init_()
   if ((ret = esp_bt_controller_init(&bt_cfg)) != ESP_OK)
   {
     ESP_LOGE(TAG, "initialize controller failed: %s\n", esp_err_to_name(ret));
-    return false;
+    return;
   }
 
   if ((ret = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT)) != ESP_OK)
   {
     ESP_LOGE(TAG, "enable controller failed: %s\n", esp_err_to_name(ret));
-    return false;
+    return;
   }
 
   if ((ret = esp_bluedroid_init()) != ESP_OK)
   {
     ESP_LOGE(TAG, "initialize bluedroid failed: %s\n", esp_err_to_name(ret));
-    return false;
+    return;
   }
 
   if ((ret = esp_bluedroid_enable()) != ESP_OK)
   {
     ESP_LOGE(TAG, "enable bluedroid failed: %s\n", esp_err_to_name(ret));
-    return false;
-  }
-  return true;
-}
-extern "C"
-{
-  void app_main(void);
-}
-void app_main()
-{
-  static bthid_callbacks_t param;
-  init_uart();
-
-  if (!init_())
-  {
     return;
   }
 
   xSemaphore = xSemaphoreCreateMutex();
 
-  hidd_register_app(sizeof(HID_PRO_CONTR), HID_PRO_CONTR);
+  hidd_device_init(sizeof(HID_PRO_CONTR), HID_PRO_CONTR);
   param.connected_cb = connected_cb;
   param.disconnected_cb = disconn_cb;
   param.paired_cb = paired_cb;
   param.intr_data_cb = intr_data_cb;
-  hidd_device_init(&param, "Pro Controller");
+  hidd_register_app(&param);
 
-  // turn on bt
   set_bt_mode(1);
-  //start blinking
   create_blink_task();
 }

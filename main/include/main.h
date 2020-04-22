@@ -14,7 +14,7 @@
 
 #include "LED.h"
 #include "uart_cmd.h"
-#include "bt.h"
+#include "bthid.h"
 #include "descriptors.h"
 
 typedef enum
@@ -27,3 +27,4 @@ typedef enum
 } STICK_STATE;
 
 static bool connected = false;
+static bool paired = false;
