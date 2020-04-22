@@ -1,0 +1,111 @@
+class _Profile {
+  static const Color Black = const Color(0xFF000000);
+  static const Color Gray = const Color(0xFF828282);
+  static const Color Red = const Color(0xFFE10F00);
+  static const Color Blue = const Color(0xFF4655F5);
+  static const Color NeonRed = const Color(0xFFFF3C28);
+  static const Color NeonBlue = const Color(0xFF0AB9E6);
+  static const Color NeonPink = const Color(0xFFFF3278);
+  static const Color NeonGreen = const Color(0xFF1EDC00);
+  static const Color NeonYellow = const Color(0xFFE6FF00);
+  static const Color NeonOrange = const Color(0xFFFAA005);
+  static const Color NeonPurple = const Color(0xFFB400E6);
+  static const Color Pikachu = const Color(0xFFFFDC00);
+  static const Color Eevee = const Color(0xFFC88C32);
+  static const Color Labo = const Color(0xFFD7AA73);
+  static const Color None = const Color(0xFFFFFFFF);
+};
+const List<_Profile> _JcPresets = [
+  const _Profile(
+    name: 'Gray',
+    body: _Profile.Gray,
+    button: const Color(0xFF0F0F0F),
+  ),
+  const _Profile(
+    name: 'Red',
+    body: _Profile.Red,
+    button: const Color(0xFF280A0A),
+  ),
+  const _Profile(
+    name: 'Blue',
+    body: _Profile.Blue,
+    button: const Color(0xFF00000A),
+  ),
+  const _Profile(
+    name: 'Neon Red',
+    body: _Profile.NeonRed,
+    button: const Color(0xFF1E0A0A),
+  ),
+  const _Profile(
+    name: 'Neon Blue',
+    body: _Profile.NeonBlue,
+    button: const Color(0xFF001E1E),
+  ),
+  const _Profile(
+    name: 'Neon Pink',
+    body: _Profile.NeonPink,
+    button: const Color(0xFF28001E),
+  ),
+  const _Profile(
+    name: 'Neon Green',
+    body: _Profile.NeonGreen,
+    button: const Color(0xFF002800),
+  ),
+  const _Profile(
+    name: 'Neon Yellow',
+    body: _Profile.NeonYellow,
+    button: const Color(0xFF142800),
+  ),
+  const _Profile(
+    name: 'Neon Orange',
+    body: _Profile.NeonOrange,
+    button: const Color(0xFF0F0A00),
+  ),
+  const _Profile(
+    name: 'Neon Purple',
+    body: _Profile.NeonPurple,
+    button: const Color(0xFF140014),
+  ),
+  const _Profile(
+    name: "Pokemon Let's Go! Pikachu",
+    body: _Profile.Pikachu,
+    button: const Color(0xFF322800),
+  ),
+  const _Profile(
+    name: "Pokemon Let's Go! Eevee",
+    body: _Profile.Eevee,
+    button: const Color(0xFF281900),
+  ),
+  const _Profile(
+    name: "Labo Creators Contest Edition",
+    body: _Profile.Labo,
+    button: const Color(0xFF1E1914),
+  ),
+];
+
+const List<_Profile> _ProPresets = [
+  const _Profile(
+    name: "Black",
+    body: const Color(0xFF323232),
+    button: const Color(0xFFAAAAAA),
+    leftGrip: _Profile.Gray,
+    rightGrip: _Profile.Gray,
+    code: const Color(0xFF323232),
+  ),
+  const _Profile(
+    name: "Splatoon 2",
+    body: const Color(0xFF313232),
+    button: const Color(0xFFDDDDDD),
+    leftGrip: _Profile.NeonGreen,
+    rightGrip: _Profile.NeonPink,
+    code: const Color(0xFF313232),
+  ),
+  const _Profile(
+    name: "Xenoblade 2",
+    body: const Color(0xFF323132),
+    button: const Color(0xFFDDDDDD),
+    leftGrip: _Profile.Red,
+    rightGrip: _Profile.Red,
+    code: const Color(0xFF323132),
+  ),
+];
