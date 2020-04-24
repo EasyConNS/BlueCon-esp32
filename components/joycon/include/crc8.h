@@ -1,5 +1,4 @@
-#ifndef CRC8_H
-#define CRC8_H
+#pragma once
 
 #define CRC8_POLYNOMIAL  0x07
 
@@ -44,5 +43,3 @@ static inline unsigned char crc8(const unsigned char *ptr, int len) {
         crc = _crc8_07_table[crc ^ *ptr++];
     return (crc);
 }
-
-#endif //CRC8_H

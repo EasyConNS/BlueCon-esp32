@@ -1,4 +1,4 @@
 set(COMPONENT_ADD_INCLUDEDIRS "include")
-set(COMPONENT_SRCS "main.cpp" "bthid.cpp")
+set(COMPONENT_SRCS "main.cpp")
 
 register_component()

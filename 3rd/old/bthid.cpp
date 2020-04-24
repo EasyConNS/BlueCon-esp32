@@ -72,24 +72,6 @@ void set_bt_mode(int mode)
     }
 }
 
-void hidd_device_init(int desc_list_len, uint8_t *desc_list)
-{
-    static esp_hidd_app_param_t app_param;
-    static esp_hidd_qos_param_t both_qos;
-    app_param.name = "Wireless Gamepad";
-    app_param.description = "Gamepad";
-    app_param.provider = "Nintendo";
-    app_param.subclass = 0x8;
-    app_param.desc_list = desc_list;
-    app_param.desc_list_len = desc_list_len;
-    memset(&both_qos, 0, sizeof(esp_hidd_qos_param_t));
-    esp_hid_device_register_app(&app_param, &both_qos, &both_qos);
-    esp_bt_dev_set_device_name("Pro Controller");
-
-    const uint8_t *bdaddr_raw = esp_bt_dev_get_address();
-    joycon.set_btaddr(bdaddr_raw);
-}
-
 void hidd_register_app(bthid_callbacks_t *params)
 {
     bthid_cb.connected_cb = params->connected_cb;
